@@ -1,0 +1,3 @@
+@echo off
+..\CekaCli.exe -m=sql -o=uhs_evol3 -p=min-range:-1 -p=max-range:-1 -p=first-column-null:false -p=second-column-null:false -p=table:UHS_EXTENDED_STORIES_2 -cs="SERVER=localhost;DATABASE=uhs;UID=root;PASSWORD=pascal;" -col=MNTHS_TO_1 -col=MNTHS_TO_2 -col=AGE -col=STATUS -col=T_NONE -col=T_HORMONE -col=T_SURGERY -col=T_PRI_CHEMO -col=T_ADJ_CHEMO -col=T_ADJ_RT -col=T_OOPH -col=T_PLASTIC -col=T_HER
+pause
