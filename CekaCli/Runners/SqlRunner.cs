@@ -20,28 +20,33 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using DM.Ceka;
 using DM.Ceka.Saver;
 using DM.Ceka.Database;
 
-namespace CekaCli
+namespace CekaCli.Runners
 {
+    /// <summary>
+    /// The executive used in the "sql" mode (uses Ceka to build a table-to-instance file)
+    /// </summary>
     sealed class SqlRunner : CliRunner
     {
-        public SqlRunner(Program self, ref CLI options)
-            : base(self, options)
+        public SqlRunner(Program p)
+            : base(p)
         {
         }
 
+        /// <summary>
+        /// Additional query parameter parsing & running Ceka methods
+        /// </summary>
+        /// <returns></returns>
         public override int Run()
         {
-            int min_range = -1;
-            int max_range = -1;
-            bool first_col_null = false;
-            bool second_col_null = true;
+            int minRange = -1;
+            int maxRange = -1;
+            bool firstColNull = false;
+            bool secondColNull = true;
             string table = "";
 
             int c = 0;
@@ -51,25 +56,25 @@ namespace CekaCli
                 {
                     switch (param.Key)
                     {
-                        case "min-range": min_range = int.Parse(param.Value); c++; break;
-                        case "max-range": max_range = int.Parse(param.Value); c++; break;
-                        case "first-column-null": first_col_null = bool.Parse(param.Value); c++; break;
-                        case "second-column-null": second_col_null = bool.Parse(param.Value); c++; break;
+                        case "min-range": minRange = int.Parse(param.Value); c++; break;
+                        case "max-range": maxRange = int.Parse(param.Value); c++; break;
+                        case "first-column-null": firstColNull = bool.Parse(param.Value); c++; break;
+                        case "second-column-null": secondColNull = bool.Parse(param.Value); c++; break;
                         case "table": table = param.Value; c++; break;
-                        default: if (options.Verbose) self.Clout("Parameter " + param.Key + " is not supported for SQL building!"); break;
+                        default: if (options.Verbose) clout("Parameter " + param.Key + " is not supported for SQL building!"); break;
                     }
                 }
             }
             catch (Exception ex)
             {
-                if (options.Verbose) self.Clout(ex.Message);
+                if (options.Verbose) clout(ex.Message);
             }
 
             if (c != 5 && options.Verbose)
-                self.Clout("Parameter set was not full! Probably using default parameters for SQL building!");
+                clout("Parameter set was not full! Probably using default parameters for SQL building!");
 
             CekaMySQL sql = new CekaMySQL(options.ConStr);
-            ArffInstance uhsAi = sql.tableToInstance(table, options.Columns.ToArray<string>(), min_range, max_range, first_col_null, second_col_null);
+            ArffInstance uhsAi = sql.tableToInstance(table, options.Columns.ToArray<string>(), minRange, maxRange, firstColNull, secondColNull);
             uhsAi.integrityCheck();
             new ArffSaver(uhsAi).saveInstance(options.OutFile);
 

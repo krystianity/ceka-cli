@@ -19,46 +19,57 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using DM.Ceka;
 using DM.Ceka.Algorithms.Associaters;
 using DM.Ceka.Loader;
 using DM.Ceka.Saver;
 
-namespace CekaCli
+namespace CekaCli.Runners
 {
+    /// <summary>
+    /// The executive used in the "mine" mode (uses Ceka to apply an algorithm to an arff file)
+    /// </summary>
     sealed class MineRunner : CliRunner
     {
         private ArffLoader loader;
         private ArffInstance instance;
 
-        public MineRunner(Program self, ref CLI options)
-            : base(self, options)
+        public MineRunner(Program p)
+            : base(p)
         {
         }
 
+        /// <summary>
+        /// another switch depending on the chosen algorithm that will call the appropriate
+        /// mining function afterwards
+        /// </summary>
+        /// <returns></returns>
         public override int Run()
         {
-
-            switch (options.Algorithm)
+            switch (options.Algorithm.ToLower())
             {
-                case "apriori": this.runApriori(); break;
-                default: throw new NotImplementedException("not yet");
+                case "apriori": runApriori(); break;
+                //more coming..
+                default: throw new NotImplementedException(options.Algorithm + " is not a supported algorithm!");
             }
 
             return 0;
         }
 
+        /// <summary>
+        /// get file into memory
+        /// </summary>
         private void loadArffFile()
         {
-            this.loader = new ArffLoader(options.InFile);
-            this.loader.loadArff();
-            this.instance = this.loader.getInstance();
+            loader = new ArffLoader(options.InFile);
+            loader.loadArff();
+            instance = loader.getInstance();
         }
 
+        /// <summary>
+        /// additional parsing & apriori application including results being saved in file (if set)
+        /// </summary>
         private void runApriori()
         {
             //defaults
@@ -79,17 +90,17 @@ namespace CekaCli
                         case "confidence": confidence = float.Parse(param.Value); c++; break;
                         case "apply-support": usupport = bool.Parse(param.Value); c++; break;
                         case "apply-confidence": uconfidence = bool.Parse(param.Value); c++; break;
-                        default: if (options.Verbose) self.Clout("Parameter " + param.Key + " is not supported for Apriori algorithm!"); break;
+                        default: if (options.Verbose) clout("Parameter " + param.Key + " is not supported for Apriori algorithm!"); break;
                     }
                 }
             }
             catch (Exception ex)
             {
-                if (options.Verbose) self.Clout(ex.Message);
+                if (options.Verbose) clout(ex.Message);
             }
 
             if (c != 4 && options.Verbose)
-                self.Clout("Parameter set was not full! Probably using default parameters for Apriori!");
+                clout("Parameter set was not full! Probably using default parameters for Apriori!");
 
             //defaults
             bool write_to_file = false;
@@ -108,6 +119,7 @@ namespace CekaCli
                 case "json-file": outputformat = AprioriSaveTypes.JSON; write_to_file = true; break;
                 case "weka-file": outputformat = AprioriSaveTypes.WEKA; write_to_file = true; break;
                 case "json-file-pretty": outputformat = AprioriSaveTypes.JSON_PRETTY; write_to_file = true; break;
+                    //default is caught before
             }
 
             //run

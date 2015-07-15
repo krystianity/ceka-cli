@@ -21,17 +21,22 @@ using Plossum.CommandLine;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using DM.Ceka.Helpers;
 
 namespace CekaCli
 {
+    /// <summary>
+    /// This class defines the CLI options that are passed to the program, Plossum will parse them according the to their attribute mapping.
+    /// It contains an additional "Evaluate" function that makes additional custom evaluation and error ouputs.
+    /// </summary>
     [CommandLineManager(ApplicationName="Ceka",
     Copyright="Copyright (c) Christian Froehlingsdorf")]
-    class CLI
+    sealed class CLI
     {
+
+        /* CLI Args */
+
         [CommandLineOption(Name="l", Description="If set, a logfile will be written", Aliases="log, enable-log, log-enabled")]
         public bool Log = false;
 
@@ -175,94 +180,104 @@ namespace CekaCli
             set { mColumns = value; }
         }
 
-        public static int Evaluate(Program self, ref CLI options, ref CommandLineParser parser){
+        /* EOF CLI ARGS */
+
+            /// <summary>
+            /// Additional evaluation option that prints error messages according to the main-mode that is used (mine, arff ..)
+            /// </summary>
+            /// <param name="self">Programm (output & parsing)</param>
+            /// <param name="options">CLI object</param>
+            /// <param name="parser">CLI Parser</param>
+            /// <returns></returns>
+        public static int Evaluate(Program program){
 
             //welcome message
-            if (!options.BlockWelcome)
-                self.Clout(parser.UsageInfo.GetHeaderAsString(78));
+            if (!program.Options.BlockWelcome)
+                program.Clout(program.Parser.UsageInfo.GetHeaderAsString(78));
 
             //debugging information
-            if (!options.Verbose)
+            if (!program.Options.Verbose)
                 DM.Ceka.Helpers.Utils.DEBUG = false;
             else
                 DM.Ceka.Helpers.Utils.DEBUG = true;
 
             //logging
-            if (!options.Log)
+            if (!program.Options.Log)
             {
                 DM.Ceka.Helpers.Utils.LOG = false;
             }
             else
             {
                 DM.Ceka.Helpers.Utils.LOG = true;
-                DM.Ceka.Helpers.Utils.LOGFILE = options.LogFile;
+                DM.Ceka.Helpers.Utils.LOGFILE = program.Options.LogFile;
             }
 
             //check for help or errors
-            if (options.Help)
+            if (program.Options.Help)
             {
-                self.Clout(parser.UsageInfo.GetOptionsAsString(78));
+                program.Clout(program.Parser.UsageInfo.GetOptionsAsString(78));
                 return -1;
             }
-            else if (parser.HasErrors)
+            else if (program.Parser.HasErrors)
             {
-                self.Clout(parser.UsageInfo.GetErrorsAsString(78));
+                program.Clout(program.Parser.UsageInfo.GetErrorsAsString(78));
                 return -2;
             }
 
             //additional evaluation
 
-            if (options.Mode == "mine")
+            if (program.Options.Mode == "mine")
             {
-                if (string.IsNullOrEmpty(options.Algorithm) || string.IsNullOrWhiteSpace(options.Algorithm))
+                if (!IsSet(program.Options.Algorithm))
                 {
                     throw new InvalidOptionValueException("This mode requires you to specify an algorithm '-a=apriori' ", false);
                 }
 
-                if (string.IsNullOrEmpty(options.InFile) || string.IsNullOrWhiteSpace(options.InFile))
+                if (!IsSet(program.Options.InFile))
                 {
                     throw new InvalidOptionValueException("This mode requires you to specify an input file '-i=filename' ", false);
                 }
 
-                if(string.IsNullOrEmpty(options.OutputType) || string.IsNullOrWhiteSpace(options.OutputType)){
+                if(!IsSet(program.Options.OutputType))
+                {
                     throw new InvalidOptionValueException("This mode requires you to specify an output type '-ot=json' ", false);
                 }
 
-                if(options.Parameters == null || options.Parameters.Count <= 0){
+                if(program.Options.Parameters == null || program.Options.Parameters.Count <= 0){
                     throw new InvalidOptionValueException("This mode requires you to specify parameters '-p=confidence:0.2 -p=support:0.3 -p=apply-confidence:false -p=apply-support:true' ", false);
                 }
               
                 string[] pa; //doesnt work in set {} block of Parameters
-                foreach (string p in options.Parameters)
+                foreach (string p in program.Options.Parameters)
                 {
                     if (!p.Contains<char>(':'))
                     {
-                        options.Parameters = null;
+                        program.Options.Parameters = null;
                         throw new InvalidOptionValueException("You specified false parameters! Do it like this: -p=p1:v1 -p=p2:v2 -p=p3:v3", false);
                     }
 
                     pa = p.Split(':');
-                    options.ParsedParameters.Add(pa[0], pa[1]);
+                    program.Options.ParsedParameters.Add(pa[0], pa[1]);
                 }
 
                 return 1;
             }
-            else if (options.Mode == "arff")
+            else if (program.Options.Mode == "arff")
             {
 
-                if (string.IsNullOrEmpty(options.InFile) || string.IsNullOrWhiteSpace(options.InFile))
+                if (!IsSet(program.Options.InFile))
                 {
                     throw new InvalidOptionValueException("This mode requires you to specify an input file '-i=filename' ", false);
                 }
 
-                if (string.IsNullOrEmpty(options.Function) || string.IsNullOrWhiteSpace(options.Function))
+                if (!IsSet(program.Options.Function))
                 {
                     throw new InvalidOptionValueException("This mode requires you to specify a function '-f=removePerAttributeValue' ", false);
                 }
 
-                if (options.Parameters == null || options.Parameters.Count <= 0)
+                if (program.Options.Parameters == null || program.Options.Parameters.Count <= 0)
                 {
-                    if(!Utils.SupportedArffFunctionsWOP.Contains<string>(options.Function)) //throw only if function requires params
+                    if(!Utils.SupportedArffFunctionsWOP.Contains<string>(program.Options.Function)) //throw only if function requires params
                     {
                         throw new InvalidOptionValueException("This mode requires you to specify parameters '-p=param1 -p=param2 -p=param3' ", false);
                     }
@@ -270,38 +285,38 @@ namespace CekaCli
 
                 return 2;
             }
-            else if (options.Mode == "sql")
+            else if (program.Options.Mode == "sql")
             {
 
-                if (string.IsNullOrEmpty(options.ConStr) || string.IsNullOrWhiteSpace(options.ConStr))
+                if (!IsSet(program.Options.ConStr))
                 {
                     throw new InvalidOptionValueException("This mode requires you to specify a connection-string '-cs=SERVER=localhost;DATABASE=uhs;UID=root;PASSWORD=root;' ", false);
                 }
 
-                if (string.IsNullOrEmpty(options.OutFile) || string.IsNullOrWhiteSpace(options.OutFile))
+                if (!IsSet(program.Options.OutFile))
                 {
                     throw new InvalidOptionValueException("This mode requires you to specify an output file '-o=uhs.arff' ");
                 }
 
-                if (options.Parameters == null || options.Parameters.Count <= 0)
+                if (program.Options.Parameters == null || program.Options.Parameters.Count <= 0)
                 {
                     throw new InvalidOptionValueException("This mode requires you to specify parameters '-p=table=mytable -p=min-range:-1 -p=max-range:-1 -p=first-column-null:false -p=second-column-null:true' ", false);
                 }
 
                 string[] pa; //doesnt work in set {} block of Parameters
-                foreach (string p in options.Parameters)
+                foreach (string p in program.Options.Parameters)
                 {
                     if (!p.Contains<char>(':'))
                     {
-                        options.Parameters = null;
+                        program.Options.Parameters = null;
                         throw new InvalidOptionValueException("You specified false parameters! Do it like this: -p=p1:v1 -p=p2:v2 -p=p3:v3", false);
                     }
 
                     pa = p.Split(':');
-                    options.ParsedParameters.Add(pa[0], pa[1]);
+                    program.Options.ParsedParameters.Add(pa[0], pa[1]);
                 }
 
-                if (options.Columns == null || options.Columns.Count <= 0)
+                if (program.Options.Columns == null || program.Options.Columns.Count <= 0)
                 {
                     throw new InvalidOptionValueException("This mode requires you to specify columns '-col=column1 -col=column2 -col=column3' ", false);
                 }
@@ -312,6 +327,16 @@ namespace CekaCli
             {
                 throw new InvalidOptionValueException("Internal error", false);
             }
+        }
+
+        /// <summary>
+        /// Simple helper method checks for Null, Empty or Whitespace in a string
+        /// </summary>
+        /// <param name="str">The string you want to check.</param>
+        /// <returns></returns>
+        public static bool IsSet(string str)
+        {
+            return !(string.IsNullOrEmpty(str) || string.IsNullOrWhiteSpace(str));
         }
     }
 }

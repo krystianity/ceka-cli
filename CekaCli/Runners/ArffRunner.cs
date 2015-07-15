@@ -18,37 +18,41 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using DM.Ceka;
 using DM.Ceka.Loader;
 using DM.Ceka.Saver;
 
-namespace CekaCli
+namespace CekaCli.Runners
 {
+    /// <summary>
+    /// The executive for used in the "arff" mode (uses Ceka to refine arff files)
+    /// </summary>
     sealed class ArffRunner : CliRunner
     {
         private ArffLoader loader;
         private ArffInstance instance;
 
-        public ArffRunner(Program self, ref CLI options)
-            : base(self, options)
+        public ArffRunner(Program p)
+            : base(p)
         {
         }
 
         private void loadArffFile()
         {
-            this.loader = new ArffLoader(options.InFile);
-            this.loader.loadArff();
-            this.instance = this.loader.getInstance();
+            loader = new ArffLoader(options.InFile);
+            loader.loadArff();
+            instance = loader.getInstance();
         }
 
+        /// <summary>
+        /// additional parsing & execution of the appropriate ceka function
+        /// </summary>
+        /// <returns></returns>
         public override int Run()
         {
-            this.loadArffFile();
+            loadArffFile();
 
             string msg = "none";
             int result = 1;
@@ -67,7 +71,7 @@ namespace CekaCli
             catch (Exception ex)
             {
                 if (options.Verbose)
-                    self.Clout("Failed to execute function, have you defined enough params? ('-p=param1 -p=param2'); " + ex.Message);
+                    clout("Failed to execute function, have you defined enough params? ('-p=param1 -p=param2'); " + ex.Message);
 
                 result = 0;
                 msg = ex.Message;
@@ -75,10 +79,11 @@ namespace CekaCli
 
             if (result > 0) //only override (save) the instance, if the function was successfull
             {
-                new ArffSaver(this.instance).saveInstance(options.InFile);
+                new ArffSaver(instance).saveInstance(options.InFile);
             }
 
-            self.Clout("{ \"result\": \"" + result + "\", \"msg\": \"" + msg + "\" }"); //give cli status, so that it could be parsed if needed
+            //make a simple JSON result cli-output
+            clout("{ \"result\": \"" + result + "\", \"msg\": \"" + msg + "\" }");
             
             return 0;
         }

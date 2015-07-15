@@ -17,32 +17,25 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace CekaCli
+namespace CekaCli.Runners
 {
+    /// <summary>
+    /// Abstract "runner" class used to give a base for the different "modes" of the application
+    /// </summary>
     abstract class CliRunner
     {
         protected CLI options;
-        protected Program self;
+        protected Program program;
 
-        protected CliRunner(Program self)
+        protected CliRunner(Program p) //<- abstract class (RC)
         {
-            this.self = self;
+            program = p;
+            options = p.Options; //could be changed and called via program
         }
 
-        public CliRunner(Program self, CLI options) : this(self)
+        protected void clout(string msg) //<- abstract class (RC)
         {
-            this.options = options;
-        }
-
-        protected void clout(string msg)
-        {
-            this.self.Clout(msg);
+            program.Clout(msg);
         }
 
         public abstract int Run();

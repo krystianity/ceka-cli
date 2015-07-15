@@ -1,0 +1,9 @@
+Y:\Dev\git\CEKA\CekaCli\bin\Debug\CekaCli.exe.config
+Y:\Dev\git\CEKA\CekaCli\bin\Debug\CekaCli.exe
+Y:\Dev\git\CEKA\CekaCli\bin\Debug\CekaCli.pdb
+Y:\Dev\git\CEKA\CekaCli\bin\Debug\C5.dll
+Y:\Dev\git\CEKA\CekaCli\bin\Debug\Ceka.dll
+Y:\Dev\git\CEKA\CekaCli\bin\Debug\Newtonsoft.Json.dll
+Y:\Dev\git\CEKA\CekaCli\bin\Debug\Plossum CommandLine.dll
+Y:\Dev\git\CEKA\CekaCli\obj\Debug\CekaCli.exe
+Y:\Dev\git\CEKA\CekaCli\obj\Debug\CekaCli.pdb
